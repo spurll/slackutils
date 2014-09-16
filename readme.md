@@ -6,6 +6,16 @@ A Python implementation of many Slack API functions designed to maximize ease-of
 Usage
 =====
 
+Installation
+------------
+
+Run `setup.py`.
+
+Requirements
+------------
+
+* requests
+
 Configuration
 -------------
 
@@ -19,7 +29,7 @@ Once installed, Slack can be used like this:
 ```python
 from slackutils import Slack
 
-s = Slack("your-slack-token")
+s = Slack("YOUR-SLACK-TOKEN")
 
 # Fetch channels, users, and groups.
 s.channels()
@@ -33,9 +43,9 @@ s.send(channel="channel", text="content")
 s.upload(filename="file.ext")
 s.files(user="user")
 
-# Interact with channels.
+# Interact with channels or groups.
 s.history(channel="channel")
-s.mark(channel="channel")
+s.mark(channel="group")
 
 # Search.
 s.search(query="search", search_type="files")
@@ -61,11 +71,6 @@ Response
 Whenever a request is made to Slack's API, the full response (and any error that may have occurred) will be stored in the `response` and `error` elements of the `Slack` object. The full response will also be returned by the function.
 
 If errors occurred, the `Slack` object's `error` attribute will contain a dictionary with the type of the error (`http` or `slack`) and the error code (e.g., `400` or `channel_not_found`). In the case of an HTTP error, the `Slack` object's `response` attribute will be empty; otherwise, it will contain the full response returned by Slack. To facilitate error-checking, the `Slack` object's `error` attribute is set to `None` when no errors are found.
-
-Requirements
-------------
-
-* requests
 
 Bugs and Feature Requests
 =========================
