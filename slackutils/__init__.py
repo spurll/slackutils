@@ -2,10 +2,10 @@
 # Attribution-NonCommercial-ShareAlike 3.0 Unported License.
 
 
-import requests, re, datetime, time
+import requests, re, datetime, time, json
 
 
-URL = "https://slack.com/api/"
+API_URL = "https://slack.com/api/"
 
 
 class Slack():
@@ -23,9 +23,20 @@ class Slack():
         # Cache
         self.user_list = []
         self.channel_list = []
+        self.group_list = []
 
         # Test authentication on startup.
         self.test()
+
+
+    def api(self, function, data=dict()):
+        """
+        Provides basic API functionality.
+        """
+
+        if "token" not in data: data["token"] = self.token
+        self.parse(requests.post(API_URL + function, data=data))
+        return self.response
 
 
     def test(self):
@@ -33,15 +44,15 @@ class Slack():
         Tests authentication.
         """
 
-        payload = {"token": self.token}
-        self.parse(requests.post(URL + "auth.test", data=payload))
+        self.api("auth.test")
 
         if self.verbose and not self.error:
             print "Authenticated as {} of {}.".format(self.response["user"],
                                                       self.response["team"])
 
 
-    def send(self, channel, message, name=None, icon=None, link_names=True,
+    def send(self, channel, text, name=None, icon=None, link_names=True,
+             parse=None, attachments=None, unfurl_links=False, icon_emoji=None,
              notify=False):
         """
         Sends a message using Slack.
@@ -49,22 +60,26 @@ class Slack():
 
         target = self.destination(channel)
 
-        if target and notify:
-            if target[0] == "@" and target not in message:
-                message += ("\n" if "\n" in message else " ") + target
-            elif target[0] == "#" and "@channel" not in message:
-                message += ("\n" if "\n" in message else " ") + "@channel"
+        if notify and type(target) is dict:
+            n = "@channel" if target.get("is_channel") or                     \
+                           target.get("is_group") else "@"+target["name"]
+            if n not in text:
+                text += ("\n" if "\n" in text else " ") + n
 
-        payload = {"token": self.token,
-                   "channel": target["id"] if type(target) == dict else target,
+        payload = {"channel": target["id"] if type(target) is dict else target,
                    "username": name if name else self.name,
+                   "parse": parse,
                    "icon_url": icon if icon else self.icon,
+                   "attachments": json.dumps(attachments),
+                   "icon_emoji": icon_emoji,
                    "link_names": int(link_names),
-                   "text": message}
-        self.parse(requests.post(URL + "chat.postMessage", data=payload))
+                   "unfurl_links": int(unfurl_links),
+                   "text": text}
+        self.api("chat.postMessage", payload)
 
         if self.verbose and not self.error:
-            print "Message delivered to {}.".format(target["name"])
+            print "Message delivered to {}.".format(target["name"]
+                  if type(target) is dict else target)
 
         return self.response
 
@@ -74,8 +89,7 @@ class Slack():
         Retrieves (and caches) all available Slack users.
         """
 
-        payload = {"token": self.token}
-        self.parse(requests.post(URL + "users.list", data=payload))
+        self.api("users.list")
 
         if not self.error:
             self.user_list = self.response["members"]
@@ -88,9 +102,7 @@ class Slack():
         Retrieves (and caches) all available Slack channels.
         """
 
-        payload = {"token": self.token,
-                   "exclude_archived": bool(exclude_archived)}
-        self.parse(requests.post(URL + "channels.list", data=payload))
+        self.api("channels.list", {"exclude_archived": int(exclude_archived)})
 
         if not self.error:
             self.channel_list = self.response["channels"]
@@ -98,27 +110,44 @@ class Slack():
         return self.response
 
 
+    def groups(self, exclude_archived=True):
+        """
+        Retrieves (and caches) all available private Slack groups.
+        """
+
+        self.api("groups.list", {"exclude_archived": int(exclude_archived)})
+
+        if not self.error:
+            self.group_list = self.response["groups"]
+
+        return self.response
+
+
     def upload(self, filename, filetype=None, title=None, comment=None,
-               target=None):
+               channels=None):
         """
         Uploads a file to Slack. If posting the file to one or more channels,
         the target argument can be either a single channel or a list.
         """
 
-        if type(target) is list:
-            target = ",".join(self.destination(t).get("id") for t in target)
-        elif target:
-            target = self.destination(target).get("id")
-        if not target: return None
+        if type(channels) is list:
+            target = [self.destination(c) for c in channels]
+            target = ",".join(c["id"] if type(c) is dict else c
+                              for c in target)
+        elif channels:
+            target = self.destination(channels)
+            if type(target) == "dict": target = target["id"]
+        else:
+            target = None
 
-        files = {'file': open(filename, 'rb')}
-        payload = {"token": self.token,
-                   "filename": filename,
-                   "filetype": filetype,
-                   "title": title,
-                   "initial_comment": comment,
-                   "channels": target}
-        self.parse(requests.post(URL+"files.upload",data=payload,files=files))
+        with open(filename, "rb") as data:
+            payload = {"content": data.read(),
+                       "filename": filename,
+                       "filetype": filetype,
+                       "title": title,
+                       "initial_comment": comment,
+                       "channels": target}
+        self.api("files.upload", payload)
 
         if self.verbose and not self.error:
             print "File uploaded successfully."
@@ -126,12 +155,17 @@ class Slack():
         return self.response
 
 
-    def history(self, channel, latest=None, oldest=None, count=None):
+    def history(self, channel, latest=None, oldest=None, count=None,
+                target_type=None):
         """
-        Checks a channel's message history.
+        Checks a channel or group's message history.
         """
+
         target = self.destination(channel)
-        if not target: return None
+
+        if not target_type:
+            target_type = "groups" if type(target) is dict and                \
+                                   target.get("is_group") else "channels"
 
         if type(oldest) == datetime.date or type(oldest) == datetime.datetime:
             oldest = time.mktime(oldest.timetuple())
@@ -139,37 +173,38 @@ class Slack():
         if type(latest) == datetime.date or type(latest) == datetime.datetime:
             latest = time.mktime(latest.timetuple())
 
-        payload = {"token": self.token,
-                   "channel": target["id"] if type(target) == dict else target,
+        payload = {"channel": target["id"] if type(target) is dict else target,
                    "latest": latest,
                    "oldest": oldest,
                    "count": count}
-        self.parse(requests.post(URL + "channels.history", data=payload))
+        self.api(target_type + ".history", payload)
 
         if self.verbose and not self.error:
-            print "Fetched history for channel {}.".format(target["name"]
-                  if type(target) == dict else target)
+            print "Fetched history for {}.".format(target["name"] if
+                  type(target) is dict else target)
 
         return self.response
 
 
-    def mark(self, channel, ts=datetime.datetime.now()):
+    def mark(self, channel, ts=datetime.datetime.now(), target_type=None):
         """
-        Sets the channel's "read" marker to a specific time.
+        Sets a channel or group's "read" marker to a specific time.
         """
+
         target = self.destination(channel)
-        if not target: return None
+
+        if not target_type:
+            target_type = "groups" if target in self.group_list else "channels"
 
         if type(ts) == datetime.date or type(ts) == datetime.datetime:
             ts = time.mktime(ts.timetuple())
 
-        payload = {"token": self.token,
-                   "channel": target["id"] if type(target) == dict else target,
+        payload = {"channel": target["id"] if type(target) is dict else target,
                    "ts": ts}
-        self.parse(requests.post(URL + "channels.mark", data=payload))
+        self.api(target_type + ".mark", payload)
 
         if self.verbose and not self.error:
-            print "Marked channel {} as read.".format(target["name"])
+            print "Marked {} as read.".format(target["name"])
 
         return self.response
 
@@ -179,6 +214,7 @@ class Slack():
         """
         Lists all files available to the user.
         """
+
         target = self.destination(user)
 
         if type(oldest) == datetime.date or type(oldest) == datetime.datetime:
@@ -190,14 +226,13 @@ class Slack():
         if type(types) is list:
             types = ",".join(types)
 
-        payload = {"token": self.token,
-                   "user": target["id"] if type(target) == dict else None,
+        payload = {"user": target["id"] if type(target) is dict else None,
                    "ts_to": latest,
                    "ts_from": oldest,
                    "types": types,
                    "count": count,
                    "page": page}
-        self.parse(requests.post(URL + "files.list", data=payload))
+        self.api("files.list", payload)
 
         if self.verbose and not self.error:
             print "Fetched file list."
@@ -205,15 +240,32 @@ class Slack():
         return self.response
 
 
-    def search(self, query, sort=None, sort_direction=None, highlight=None,
-               count=None, page=None, search_type="all"):
-        pass
+    def search(self, query, sort=None, search_type="all", sort_direction=None,
+               highlight=False, count=None, page=None):
+        """
+        Searches either files, messages, or both (the default).
+        """
+
+        payload = {"query": query,
+                   "sort": sort,
+                   "sort_dir": sort_direction,
+                   "highlight": int(highlight),
+                   "count": count,
+                   "page": page}
+        self.api("search" + search_type, payload)
+
+        if self.verbose and not self.error:
+            print 'Searched {} for "{}".'.format(search_type, query)
+
+        return self.response
 
 
     def destination(self, target, refresh=False):
         """
         Takes a partial or inexact destination and finds the best match from
-        among the available channels and users. Channel names prepended with 
+        among the available users, channels, and groups. Channel names
+        prepended with "#" and user names prepended with "@" indicate an exact
+        match; all other destinations take "fuzzy" matches.
         """
 
         if not target:
@@ -222,6 +274,7 @@ class Slack():
         # Refresh lists of users and channels if necessary.
         if refresh or not self.user_list: self.users()
         if refresh or not self.channel_list: self.channels()
+        if refresh or not self.group_list: self.groups()
 
         if target[0] == "@":
             # Exact match for a user.
@@ -233,16 +286,18 @@ class Slack():
 
         else:
             # Inexact match.
-            found = [i for i in self.channel_list + self.user_list
-                     if target.lower() in i["name"].lower() or ("real_name" in
-                     i and target.lower() in i["real_name"].lower())]
+            found = [i for i in self.channel_list + self.user_list +
+                     self.group_list if target.lower() in i["name"].lower() or
+                     ("real_name" in i and target.lower() in
+                     i["real_name"].lower())]
 
         if len(found) == 1:
             return found[0]
 
         if self.verbose:
             if not found:
-                print 'No users or channels found named "{}".'.format(target)
+                print 'Unable to find any users, channels, or groups named '  \
+                      '"{}".'.format(target)
             else:
                 print 'Unable to identify destination. Possible matches: {}'  \
                       .format(', '.join(i["name"] for i in found))

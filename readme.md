@@ -11,8 +11,8 @@ Configuration
 
 First of all, you'll need a [Slack](http://www.slack.com) account. The package can be installed in the standard fashion using `setup.py`. In order to use Slack's API, you'll need to generate an API token, which can be obtained from the [Slack API page](http://api.slack.com).
 
-Usage
------
+Basic Usage
+-----------
 
 Once installed, Slack can be used like this:
 
@@ -20,23 +20,47 @@ Once installed, Slack can be used like this:
 from slackutils import Slack
 
 s = Slack("your-slack-token")
-s.send(target="channel", message="content")
+
+# Fetch channels, users, and groups.
 s.channels()
 s.users()
-s.upload(filename="file")
+s.groups()
+
+# Send a message to a user or a channel.
+s.send(channel="channel", text="content")
+
+# Upload or list files.
+s.upload(filename="file.ext")
 s.files(user="user")
+
+# Interact with channels.
 s.history(channel="channel")
 s.mark(channel="channel")
+
+# Search.
+s.search(query="search", search_type="files")
+
+# Make any other call to the API.
+s.api(function="channels.join", data={"name": "channel"})
 ```
 
 There are plenty of other options available for advanced usage, of course.
+
+Sending a Message
+-----------------
+
+To send a message in Slack (probably the thing you'll want to do most often), use the `Slack` object's `send` function (which uses the Slack API's `chat.postMessage` function). But there are a few extra features.
+
+If you want to send a message to a specific user or channel, prepend the exact destination name with either `@` or `#`. If you don't include either symbol, Slack Utils will search all users, channels, and private groups for a matching destination. The request may fail if multiple ambiguous destinations (or none) are found, so check the `Slack` object's `error` attribute. (If the object's `verbose` flag is set, you'll get suggestions for potential channel matches.)
+
+If you call `send` with the `notify` flag, Slack Utils will parse the text looking for either `@username` or `@channel` (as appropriate); if the appropriate notification text is not found, it will be appended to the message to ensure that the user (or channel) in question will receive a notification.
 
 Response
 --------
 
 Whenever a request is made to Slack's API, the full response (and any error that may have occurred) will be stored in the `response` and `error` elements of the `Slack` object. The full response will also be returned by the function.
 
-If errors occurred, `s.error` will contain a dictionary with the type of the error (`http` or `slack`) and the error code (e.g., `400` or `channel_not_found`). In the case of an HTTP error, `s.response` will be empty; otherwise, it will contain the full response returned by Slack. To facilitate error-checking, `s.error` is set to `None` when no errors are found.
+If errors occurred, the `Slack` object's `error` attribute will contain a dictionary with the type of the error (`http` or `slack`) and the error code (e.g., `400` or `channel_not_found`). In the case of an HTTP error, the `Slack` object's `response` attribute will be empty; otherwise, it will contain the full response returned by Slack. To facilitate error-checking, the `Slack` object's `error` attribute is set to `None` when no errors are found.
 
 Requirements
 ------------
@@ -49,20 +73,7 @@ Bugs and Feature Requests
 Feature Requests
 ----------------
 
-Not yet implemented:
-
-* `chat.postMessage` (`Slack.send` doesn't support all API features yet)
-* `search.files`
-* `search.messages`
-* `search.all`
-* `groups.history`
-* `groups.list`
-* `groups.mark`
-
-Other requested changes:
-
-* `send` (and `destination`) don't support private groups yet.
-* It would be good to have a generic API calling function that takes a function name (e.g., `files.info`) and a dictionary of arguments, adds the auth token and passes it along.
+None
 
 Known Bugs
 ----------
