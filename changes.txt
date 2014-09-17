@@ -1,0 +1,2 @@
+v0.1, 2014-09-16 -- Initial release.
+v0.1.1, 2014-09-17 -- Added support for sending messages to fully-specified users, channels, and groups if the user supplies a dict/json instead of a name string. Updated readme documentation.

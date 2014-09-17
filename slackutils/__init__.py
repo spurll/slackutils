@@ -268,7 +268,8 @@ class Slack():
         match; all other destinations take "fuzzy" matches.
         """
 
-        if not target:
+        # Either nothing to find or it's already a fully-qualified destination.
+        if not target or type(target) is dict:
             return target
 
         # Refresh lists of users and channels if necessary.

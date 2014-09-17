@@ -61,7 +61,7 @@ Sending a Message
 
 To send a message in Slack (probably the thing you'll want to do most often), use the `Slack` object's `send` function (which uses the Slack API's `chat.postMessage` function). But there are a few extra features.
 
-If you want to send a message to a specific user or channel, prepend the exact destination name with either `@` or `#`. If you don't include either symbol, Slack Utils will search all users, channels, and private groups for a matching destination. The request may fail if multiple ambiguous destinations (or none) are found, so check the `Slack` object's `error` attribute. (If the object's `verbose` flag is set, you'll get suggestions for potential channel matches.)
+If you want to send a message to a specific user or channel, you can prepend the exact destination name with either `@` or `#`. If you don't include either symbol, Slack Utils will search all users, channels, and private groups for a matching destination. The request may fail if multiple ambiguous destinations (or none) are found, so check the `Slack` object's `error` attribute. (If the object's `verbose` flag is set, you'll get suggestions for potential channel matches.)
 
 If you call `send` with the `notify` flag, Slack Utils will parse the text looking for either `@username` or `@channel` (as appropriate); if the appropriate notification text is not found, it will be appended to the message to ensure that the user (or channel) in question will receive a notification.
 
@@ -70,7 +70,28 @@ Response
 
 Whenever a request is made to Slack's API, the full response (and any error that may have occurred) will be stored in the `response` and `error` elements of the `Slack` object. The full response will also be returned by the function.
 
-If errors occurred, the `Slack` object's `error` attribute will contain a dictionary with the type of the error (`http` or `slack`) and the error code (e.g., `400` or `channel_not_found`). In the case of an HTTP error, the `Slack` object's `response` attribute will be empty; otherwise, it will contain the full response returned by Slack. To facilitate error-checking, the `Slack` object's `error` attribute is set to `None` when no errors are found.
+If errors occurred, the `Slack` object's `error` attribute will contain a dictionary with the type of the error (`http` or `slack`) and the error code (e.g., `500` or `channel_not_found`). In the case of an HTTP error, the `Slack` object's `response` attribute will be empty; otherwise, it will contain the full response returned by Slack. To facilitate error-checking, the `Slack` object's `error` attribute is set to `None` when no errors are found.
+
+### HTTP Error
+
+```python
+>>> s = Slack("YOUR-SLACK-TOKEN")
+>>> s.response	# None
+>>> s.error
+{'code': 500, 'type': 'http'}
+```
+
+### Slack Error
+
+```python
+>>> s = Slack("YOUR-SLACK-TOKEN")
+>>> s.send("somebody", "message")
+{u'ok': True, u'ts': u'1410965023.000021', u'channel': u'D02549KAB'}
+>>> s.send("nobody", "message")
+{u'ok': False, u'error': u'channel_not_found'}
+>>> s.error
+{'code': u'channel_not_found', 'type': 'slack'}
+```
 
 Bugs and Feature Requests
 =========================
