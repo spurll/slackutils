@@ -47,8 +47,8 @@ class Slack():
         self.api("auth.test")
 
         if self.verbose and not self.error:
-            print "Authenticated as {} of {}.".format(self.response["user"],
-                                                      self.response["team"])
+            print("Authenticated as {} of {}.".format(self.response["user"],
+                                                      self.response["team"]))
 
 
     def send(self, channel, text, name=None, icon=None, link_names=True,
@@ -62,7 +62,7 @@ class Slack():
 
         if notify and type(target) is dict:
             n = "@channel" if target.get("is_channel") or                     \
-                           target.get("is_group") else "@"+target["name"]
+                              target.get("is_group") else "@"+target["name"]
             if n not in text:
                 text += ("\n" if "\n" in text else " ") + n
 
@@ -78,8 +78,8 @@ class Slack():
         self.api("chat.postMessage", payload)
 
         if self.verbose and not self.error:
-            print "Message delivered to {}.".format(target["name"]
-                  if type(target) is dict else target)
+            print("Message delivered to {}.".format(target["name"]
+                  if type(target) is dict else target))
 
         return self.response
 
@@ -150,7 +150,7 @@ class Slack():
         self.api("files.upload", payload)
 
         if self.verbose and not self.error:
-            print "File uploaded successfully."
+            print("File uploaded successfully.")
 
         return self.response
 
@@ -165,7 +165,7 @@ class Slack():
 
         if not target_type:
             target_type = "groups" if type(target) is dict and                \
-                                   target.get("is_group") else "channels"
+                                      target.get("is_group") else "channels"
 
         if type(oldest) == datetime.date or type(oldest) == datetime.datetime:
             oldest = time.mktime(oldest.timetuple())
@@ -180,8 +180,8 @@ class Slack():
         self.api(target_type + ".history", payload)
 
         if self.verbose and not self.error:
-            print "Fetched history for {}.".format(target["name"] if
-                  type(target) is dict else target)
+            print("Fetched history for {}.".format(target["name"] if
+                  type(target) is dict else target))
 
         return self.response
 
@@ -204,7 +204,7 @@ class Slack():
         self.api(target_type + ".mark", payload)
 
         if self.verbose and not self.error:
-            print "Marked {} as read.".format(target["name"])
+            print("Marked {} as read.".format(target["name"]))
 
         return self.response
 
@@ -235,7 +235,7 @@ class Slack():
         self.api("files.list", payload)
 
         if self.verbose and not self.error:
-            print "Fetched file list."
+            print("Fetched file list.")
 
         return self.response
 
@@ -255,7 +255,7 @@ class Slack():
         self.api("search" + search_type, payload)
 
         if self.verbose and not self.error:
-            print 'Searched {} for "{}".'.format(search_type, query)
+            print('Searched {} for "{}".'.format(search_type, query))
 
         return self.response
 
@@ -297,11 +297,11 @@ class Slack():
 
         if self.verbose:
             if not found:
-                print 'Unable to find any users, channels, or groups named '  \
-                      '"{}".'.format(target)
+                print('Unable to find any users, channels, or groups named '
+                      '"{}".'.format(target))
             else:
-                print 'Unable to identify destination. Possible matches: {}'  \
-                      .format(', '.join(i["name"] for i in found))
+                print('Unable to identify destination. Possible matches: {}'
+                      .format(', '.join(i["name"] for i in found)))
 
         return target
 
@@ -326,4 +326,4 @@ class Slack():
                 self.error = None
 
         if self.error and self.verbose:
-            print "Error: {}".format(self.error)
+            print("Error: {}".format(self.error))

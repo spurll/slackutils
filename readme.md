@@ -1,7 +1,7 @@
 Slack Utils
 ===========
 
-A Python implementation of many Slack API functions designed to maximize ease-of-use.
+A Python 3 implementation of many Slack API functions designed to maximize ease-of-use.
 
 Usage
 =====

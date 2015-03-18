@@ -5,7 +5,7 @@ from setuptools import setup
 
 
 setup(name='SlackUtils',
-      version='0.1.1',
+      version='0.1.2',
       description='An implementation of many Slack API functions designed to '\
                   'maximize ease-of-use.',
       url='https://github.com/spurll/slackutils',
