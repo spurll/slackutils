@@ -99,7 +99,7 @@ Bugs and Feature Requests
 Feature Requests
 ----------------
 
-None
+* Doesn't currently support many of Slack's newer features. ¯\_(ツ)_/¯
 
 Known Bugs
 ----------
@@ -119,7 +119,8 @@ There is at least one other Slack API implementation out there on PyPI. [Slacker
 License Information
 ===================
 
-Written by Gem Newman. [GitHub](https://github.com/spurll/) | [Blog](http://www.startleddisbelief.com) | [Twitter](https://twitter.com/spurll)
+Written by Gem Newman. [Website](http://spurll.com) | [GitHub](https://github.com/spurll/) | [Twitter](https://twitter.com/spurll)
 
-This work is licensed under Creative Commons [BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+This work is licensed under Creative Commons [BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/).
 
+Remember: [GitHub is not my CV.](https://blog.jcoglan.com/2013/11/15/why-github-is-not-your-cv/)
