@@ -99,6 +99,7 @@ Bugs and Feature Requests
 Feature Requests
 ----------------
 
+* Because of the way group messages work, usernames without an `@` are basically never resolved. To fix this, prioritize matching user names first, then search for channels if no user names are found.
 * Doesn't currently support many of Slack's newer features. ¯\_(ツ)_/¯
 
 Known Bugs
