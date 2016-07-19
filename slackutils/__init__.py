@@ -9,7 +9,7 @@ API_URL = "https://slack.com/api/"
 
 
 class Slack():
-    def __init__(self, token, name=None, icon=None, error=True, verbose=False):
+    def __init__(self, token, name=None, icon=None, verbose=False):
         # Settings
         self.token = token
         self.name = name
@@ -52,8 +52,7 @@ class Slack():
 
 
     def send(self, channel, text, name=None, icon=None, link_names=True,
-             parse=None, attachments=None, unfurl_links=False, icon_emoji=None,
-             notify=False):
+             parse=None, attachments=None, unfurl_links=False, notify=False):
         """
         Sends a message using Slack.
         """
@@ -66,12 +65,16 @@ class Slack():
             if n not in text:
                 text += ("\n" if "\n" in text else " ") + n
 
+        if icon is None: icon = self.icon
+        icon_key = (
+            "icon_emoji" if icon is not None and icon[0] == ":" else "icon_url"
+        )
+
         payload = {"channel": target["id"] if type(target) is dict else target,
                    "username": name if name else self.name,
                    "parse": parse,
-                   "icon_url": icon if icon else self.icon,
+                   icon_key: icon,
                    "attachments": json.dumps(attachments),
-                   "icon_emoji": icon_emoji,
                    "link_names": int(link_names),
                    "unfurl_links": int(unfurl_links),
                    "text": text}
@@ -286,11 +289,17 @@ class Slack():
             found = [c for c in self.channel_list if c["name"] == target[1:]]
 
         else:
-            # Inexact match.
-            found = [i for i in self.channel_list + self.user_list +
-                     self.group_list if target.lower() in i["name"].lower() or
-                     ("real_name" in i and target.lower() in
-                     i["real_name"].lower())]
+            all_lists = self.user_list + self.channel_list + self.group_list
+
+            # Try exact matches for users, channels, and groups.
+            found = [i for i in all_lists if i["name"] == target]
+
+            if len(found) != 1:
+                # Cast a wider net. Try an inexact match.
+                found = [i for i in all_lists
+                         if target.lower() in i["name"].lower() or
+                         ("real_name" in i and target.lower() in
+                         i["real_name"].lower())]
 
         if len(found) == 1:
             return found[0]
