@@ -1,6 +1,9 @@
 Slack Utils
 ===========
 
+**This package is no longer supported, as I can't keep up with the ever-changing Slack API.
+Use [Slacker](https://github.com/os/slacker) instead!**
+
 A Python 3 implementation of many Slack API functions designed to maximize ease-of-use.
 
 Usage
@@ -19,7 +22,9 @@ Requirements
 Configuration
 -------------
 
-First of all, you'll need a [Slack](http://www.slack.com) account. The package can be installed in the standard fashion using `setup.py`. In order to use Slack's API, you'll need to generate an API token, which can be obtained from the [Slack API page](http://api.slack.com).
+First of all, you'll need a [Slack](http://www.slack.com) account. The package can be installed in the standard fashion using
+`setup.py`. In order to use Slack's API, you'll need to generate an API token, which can be obtained from the
+[Slack API page](http://api.slack.com).
 
 Basic Usage
 -----------
@@ -100,7 +105,7 @@ Feature Requests
 ----------------
 
 * Because of the way group messages work, usernames without an `@` are basically never resolved. To fix this, prioritize matching user names first, then search for channels if no user names are found.
-* Doesn't currently support many of Slack's newer features. ¯\_(ツ)_/¯
+* Doesn't currently support many of Slack's newer features. ¯\\_(ツ)_/¯
 
 Known Bugs
 ----------
@@ -110,12 +115,16 @@ None
 Slack
 =====
 
-Information about Slack is available on [their website](http://www.slack.com). Information about the Slack API is available [here](http://api.slack.com).
+Information about Slack is available on [their website](http://www.slack.com). Information about the Slack API is available
+[here](http://api.slack.com).
 
 A Note on Slacker
 =================
 
-There is at least one other Slack API implementation out there on PyPI. [Slacker](https://pypi.python.org/pypi/slacker/0.3.3) is a full-feature implementation of Slack's API and does exactly what it says on the tin. Slack's API is powerful, but pretty raw. It's my intention to make SlackUtils a little easier to work with (with fuzzy destination matching, handling datetimes and lists, and the like). Slacker may be more in line with what you're looking for, so you should to check it out.
+There is at least one other Slack API implementation out there on PyPI. [Slacker](https://pypi.python.org/pypi/slacker/0.3.3)
+is a full-feature implementation of Slack's API and does exactly what it says on the tin. Slack's API is powerful, but pretty
+raw. It's my intention to make SlackUtils a little easier to work with (with fuzzy destination matching, handling datetimes and
+lists, and the like). Slacker may be more in line with what you're looking for, so you should to check it out.
 
 License Information
 ===================
